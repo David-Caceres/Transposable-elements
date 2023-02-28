@@ -1,0 +1,104 @@
+---
+title: "Transposable elements expression in Zebrafish brain"
+author: "David Cáceres"
+date: "2023-02-08"
+output:
+  pdf_document: 
+    toc: yes
+    toc_depth: 2
+    fig_height: 4
+    fig_width: 6
+  html_document:
+    fig_caption: yes
+    toc: yes
+    toc_depth: 2
+    latex_engine: xelatex
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, root.dir ="~/Exosomas/QC/Data/",
+                      tidy.opts=list(width.cutof=30),tidy=TRUE,
+                      comment = NULL, cache = TRUE,dev = 'pdf')
+```
+
+```{r}
+library(GEOquery)
+library(base)
+library(Seurat)
+library(ggplot2)
+library(SingleR)
+library(shinycssloaders)
+library(DT)
+library(dplyr)
+library(shiny)
+library(URD)
+
+```
+
+
+```{r}
+data_dir <- '/home/david/Documentos/Transposable elements/data/GSM4793196/'
+list.files(data_dir) # Should show barcodes.tsv, genes.tsv, and matrix.mtx
+expression_matrix <- Read10X(data.dir = data_dir)
+seurat_object1 = CreateSeuratObject(counts = expression_matrix, project = "ZB24h")
+
+data_dir <- '/home/david/Documentos/Transposable elements/data/GSM4793197/'
+list.files(data_dir) # Should show barcodes.tsv, genes.tsv, and matrix.mtx
+expression_matrix <- Read10X(data.dir = data_dir)
+seurat_object2 = CreateSeuratObject(counts = expression_matrix, project = "ZB24h")
+
+data_dir <- '/home/david/Documentos/Transposable elements/data/GSM4793198/'
+list.files(data_dir) # Should show barcodes.tsv, genes.tsv, and matrix.mtx
+expression_matrix <- Read10X(data.dir = data_dir)
+seurat_object3 = CreateSeuratObject(counts = expression_matrix, project = "ZB24h")
+```
+
+
+```{r}
+srat <- merge(seurat_object1, y = c(seurat_object2, seurat_object3), add.cell.ids = c("3.6K", "3.8K", "1.9K"), project = "ZB24h")
+
+```
+
+
+```{r}
+
+# COmpruebo la cantiudad de genes mitocondriales mapeados (contienen "MT-")
+
+srat[["percent.mt"]] <- PercentageFeatureSet(srat, pattern = "^MT-")
+
+sum(srat$percent.mt)
+
+# No tenemos genes mitocondriales.
+
+
+
+VlnPlot(srat, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2)
+```
+
+
+```{r}
+cluster24<-readRDS("/home/david/Documentos/zf_brain/data/GSE158142_zf24hpf_cc_filt.cluster.rds")
+
+slot(cluster24, "data")@Dimnames[[2]]
+```
+
+```{r}
+
+View(as.data.frame(slot(cluster24, "raw.data")))
+
+library(xls)
+
+datos<-read.xlsx("/media/david/Disco USB/Raj et al 2020/Mobile elements symbols.xlsx", sheetIndex=1)
+mobile<-datos$Mobile.elements.Tes
+length(mobile)
+sum(mobile %in% rownames(Matriz24h_raw))
+
+
+mobile<-rownames(srat)
+length(srat)
+sum(mobile %in% rownames(Matriz24h_raw))
+
+```
+
